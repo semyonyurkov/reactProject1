@@ -4,6 +4,7 @@ import "./Button.css";
 function Button() {
     // let text = "Сохранить";
     const [text, setText] = useState("Сохранить");
+
     const clicked = () => {
         setText("Закрыть");
     };
