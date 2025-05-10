@@ -6,7 +6,7 @@ import classnames from "classnames";
 import { formReducer, INITITAL_STATE } from "./JournalForn.state";
 import { UserContext } from "../../context/user.context";
 
-function JournalForm({ onSubmit }) {
+function JournalForm({ onSubmit, data, onDelete }) {
     const [formState, dispatchForm] = useReducer(formReducer, INITITAL_STATE);
     const { isValid, isFormReadyToSubmit, values } = formState;
     const titleRef = useRef();
@@ -29,6 +29,20 @@ function JournalForm({ onSubmit }) {
     };
 
     useEffect(() => {
+        if (!data) {
+            dispatchForm({ type: "CLEAR" });
+            dispatchForm({
+                type: "SET_VALUE",
+                payload: { userId: userId },
+            });
+        }
+        dispatchForm({
+            type: "SET_VALUE",
+            payload: { ...data },
+        });
+    }, [data]);
+
+    useEffect(() => {
         let timerId;
         if (!isValid.date || !isValid.text || !isValid.title) {
             focusError(isValid);
@@ -45,8 +59,12 @@ function JournalForm({ onSubmit }) {
         if (isFormReadyToSubmit) {
             onSubmit(values);
             dispatchForm({ type: "CLEAR" });
+            dispatchForm({
+                type: "SET_VALUE",
+                payload: { userId: userId },
+            });
         }
-    }, [isFormReadyToSubmit, values, onSubmit]);
+    }, [isFormReadyToSubmit, values, onSubmit, userId]);
 
     useEffect(() => {
         dispatchForm({
@@ -67,9 +85,18 @@ function JournalForm({ onSubmit }) {
         dispatchForm({ type: "SUBMIT" });
     };
 
+    const deleteJournalItem = () => {
+        onDelete(data.id);
+        dispatchForm({ type: "CLEAR" });
+        dispatchForm({
+            type: "SET_VALUE",
+            payload: { userId: userId },
+        });
+    };
+
     return (
         <form onSubmit={addJournalItem} className={`${styles["journal-form"]}`}>
-            <div>
+            <div className={styles["form-row"]}>
                 <Input
                     ref={titleRef}
                     isValid={isValid.title}
@@ -79,6 +106,15 @@ function JournalForm({ onSubmit }) {
                     value={values.title}
                     onChange={onChange}
                 />
+                {data?.id && (
+                    <button
+                        onClick={deleteJournalItem}
+                        className={styles["delete"]}
+                        type="button"
+                    >
+                        <img src="/archive.svg" alt="кнопка удалить" />
+                    </button>
+                )}
             </div>
 
             <div className={styles["form-row"]}>
@@ -92,7 +128,11 @@ function JournalForm({ onSubmit }) {
                     id="date"
                     type="date"
                     name="date"
-                    value={values.date}
+                    value={
+                        values.date
+                            ? new Date(values.date).toISOString().slice(0, 10)
+                            : ""
+                    }
                     onChange={onChange}
                 />
             </div>
